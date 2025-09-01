@@ -1,0 +1,158 @@
+// Interface for Catalog operations
+interface Catalog {
+    void addMovie(Movie movie);
+    void displayMovies();
+    Movie searchMovie(String title);
+}
+
+// Base class Movie
+class Movie {
+    protected String title;
+    protected String director;
+    protected int releaseYear;
+
+    // Constructor
+    public Movie(String title, String director, int releaseYear) {
+        this.title = title;
+        this.director = director;
+        this.releaseYear = releaseYear;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void displayInfo() {
+        System.out.println("Title: " + title + ", Director: " + director + ", Year: " + releaseYear);
+    }
+}
+
+// Subclass Documentary
+class Documentary extends Movie {
+    private String subject;
+
+    public Documentary(String title, String director, int releaseYear, String subject) {
+        super(title, director, releaseYear);
+        this.subject = subject;
+    }
+
+    @Override
+    public void displayInfo() {
+        super.displayInfo();
+        System.out.println("Subject: " + subject);
+    }
+}
+
+// Subclass FeatureFilm
+class FeatureFilm extends Movie {
+    private String genre;
+
+    public FeatureFilm(String title, String director, int releaseYear, String genre) {
+        super(title, director, releaseYear);
+        this.genre = genre;
+    }
+
+    @Override
+    public void displayInfo() {
+        super.displayInfo();
+        System.out.println("Genre: " + genre);
+    }
+}
+
+// Real implementation of Catalog
+class MovieCatalog implements Catalog {
+    private java.util.List<Movie> movies;
+
+    public MovieCatalog() {
+        movies = new java.util.ArrayList<>();
+    }
+
+    @Override
+    public void addMovie(Movie movie) {
+        movies.add(movie);
+        System.out.println("Movie added: " + movie.getTitle());
+    }
+
+    @Override
+    public void displayMovies() {
+        System.out.println("\n--- Movie Catalog ---");
+        for (Movie m : movies) {
+            m.displayInfo();
+            System.out.println("----------------------");
+        }
+    }
+
+    @Override
+    public Movie searchMovie(String title) {
+        for (Movie m : movies) {
+            if (m.getTitle().equalsIgnoreCase(title)) {
+                return m;
+            }
+        }
+        return null;
+    }
+}
+
+// Proxy class to control access
+class MovieCatalogProxy implements Catalog {
+    private MovieCatalog realCatalog;
+    private String userRole;
+
+    public MovieCatalogProxy(String userRole) {
+        this.userRole = userRole;
+        realCatalog = new MovieCatalog();
+    }
+
+    @Override
+    public void addMovie(Movie movie) {
+        if (userRole.equals("Admin")) {
+            realCatalog.addMovie(movie);
+        } else {
+            System.out.println("Access Denied! Only Admin can add movies.");
+        }
+    }
+
+    @Override
+    public void displayMovies() {
+        realCatalog.displayMovies();
+    }
+
+    @Override
+    public Movie searchMovie(String title) {
+        return realCatalog.searchMovie(title);
+    }
+}
+
+// Main class to test the system
+public class MovieLibrarySystem {
+    public static void main(String[] args) {
+        // Admin user with full access
+        Catalog adminCatalog = new MovieCatalogProxy("Admin");
+        
+        // Normal user with limited access
+        Catalog userCatalog = new MovieCatalogProxy("User");
+
+        // Creating movies
+        Movie doc = new Documentary("Planet Earth", "Alastair Fothergill", 2006, "Nature");
+        Movie film = new FeatureFilm("Inception", "Christopher Nolan", 2010, "Sci-Fi");
+
+        // Admin adds movies
+        adminCatalog.addMovie(doc);
+        adminCatalog.addMovie(film);
+
+        // Normal user tries to add (will be denied)
+        userCatalog.addMovie(new FeatureFilm("Avatar", "James Cameron", 2009, "Fantasy"));
+
+        // Display movies
+        userCatalog.displayMovies();
+
+        // Search for a movie
+        Movie found = userCatalog.searchMovie("Inception");
+        if (found != null) {
+            System.out.println("\nMovie Found:");
+            found.displayInfo();
+        } else {
+            System.out.println("Movie not found.");
+        }
+    }
+}
